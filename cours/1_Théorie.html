@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Th&eacute;orie de la concurrence</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <hr>
+<h2 id="title-théorie-de-la-concurrenceauthor-johann-philippe">title: Théorie de la concurrence
+author: Johann Philippe</h2>
+<h1 id="théorie-de-la-concurrence">Théorie de la concurrence</h1>
+<p>Le cerveau humain effectue plusieurs actions en même temps et toutefois, notre conscience / concentration saisit mieux les tâches séquentielles, c'est même une tendance naturelle : réduire les événements à une suite séquentielle.
+<a href="https://hal.science/hal-03162635v1/document">60 years of mastering concurrent computing through sequential thinking</a>
+Idem en informatique donc : plus simple de comprendre un programme purement séquentiel qu'un complexe parallèle ou concurrent.</p>
+<p>La concurrence naît d'un certain nombre de contraintes et nouveautés dans l'informatique à partir des années 60 et 70 :</p>
+<ul>
+<li>Le dépassement du paradigme &quot;single user interacting with a single sequential computer&quot;</li>
+<li>La nature blocante de certaines tâches</li>
+<li>Le développement des communications réseau</li>
+<li>Plus tard l'impossibilité de dépasser significativement les vitesses processeur, donnant naissance aux architectures multi-coeurs</li>
+</ul>
+<p>Pionniers à avoir travaillé sur la concurrence :</p>
+<ul>
+<li><strong>Theodorus Dekker</strong> - mathématicien hollandais, connu pour l'invention de l'algorithme de dekker</li>
+<li><strong>Edsger Dijkstra</strong> - aussi connu pour son travail sur les algorithmes du plus court chemin <em>pathfinding</em> (i.e. <a href="https://fr.wikipedia.org/wiki/Algorithme_de_Dijkstra">Algorithme de Dijkstra</a>).</li>
+</ul>
+<p>Ils sont connus pour avoir travaillé sur le concept d'<em>exclusion mutuelle</em>, <strong>mutual exclusion</strong> (spoiler, on va en parler).
+<a href="https://lamport.azurewebsites.net/pubs/dijkstra.pdf">Dijkstra</a>
+Dans cet article, l'autrice décrit les problématiques de base de l'informatique conccurrente ainsi que les premières solutions apportées par les deux pionniers : un système de <em>mutual exclusion</em>.</p>
+<blockquote>
+<p>For almost three years, this solution has been considered a &quot;curiosity&quot;, until these issues at the beginning of 1962 suddenly became relevant for me again...
+1959, Dekker</p>
+</blockquote>
+<p>Le problème principal : le partage de la mémoire entre plusieurs processus (on les appelle comme ça à l'époque).
+C'est dans ces années qu'on va baptiser <em>critical section</em>, la partie du code de chaque processus qui travaille sur une mémoire partagée avec d'autres processus.
+Le problème principal est donc celui-ci : la synchronisation, ou comment s'assurer que les processus ne travaillent pas sur les mêmes ressources en même temps (ou du moins, que tous les processus sont hors de la <em>critical section</em> lorsqu'un processus souhaite y entrer).
+En effet, une lecture &amp; écriture simultanée de deux processus entraîne des risques de corruption mémoire : impossible de s'assurer de l'état de la mémoire lorsque deux acteurs travaillent sur celle-ci.
+Les deux chercheurs développent donc un système que l'autrice du précédent article nomme <em>one-bit protocol</em>. Un système de <em>flag</em> (booléen) :</p>
+<ul>
+<li>Tous les processus ont un flag qui est <code>true</code> par défaut</li>
+<li>Lorsqu'un processus souhaite entrer dans la critical section, il vérifie que les flags des autres processus sont <code>true</code></li>
+<li>Si oui, il met son flag en <code>false</code>, puis <code>true</code> lorsqu'il sort de la critical section.</li>
+</ul>
+<p>Un problème survient rapidement : le <em>deadlock</em> (Article précédent sur Dijkstra page 5, <em>one bit algorithm</em>).
+Le problème de l'exclusion mutuelle vu d'un point de vue théorique est complètement indépendant des systèmes : c'est un problème conceptuel de la concurrence.
+En partant du principe que dans un contexte de concurrence : <em>on ne sait jamais dans quel état sont les autres processus, ni ce qu'ils font vraiment</em> :&gt; Sont-ils en train de mettre leur flag en false en même temps qu'un autre processus ?
+Dans ce contexte, où deux processus verrouillent leur flag, ils vont tous deux attendre indéfiniment que l'autre se déverrouille : ils supposent chacun que l'autre est dans la critical section, alors qu'aucun des deux ne l'est. Dekker et Dijkstra proposent la solution : l'un d'entre eux doit déverrouiller, et attendre, libérant l'autre processus pour entrer dans la section critique.
+Cette solution résoud la situation du deadlock, mais ne prévient pas tous les risques du multiprocessing : il est théoriquement possible qu'un processus attende indéfiniment (car théoriquement possible qu'un autre processus entre dans la section critique pendant qu'il attend).</p>
+<p>L'algorithme suivant, de Dekker, page 8, propose une solution avec un système de priorité pour les systèmes à 2 processus, appelé <em>starvation freedom</em>, ou <em>liberté de famine</em> (?).</p>
+<p>Définition de Dijkstra de la preuve du <em>deadlock freedom</em> :</p>
+<blockquote>
+<p>Suppose both processes are trying to enter the critical section. If
+neither succeeds, then the value of turn remains constant. It is
+then easy to see that process number <em>turn</em> must eventually wait
+with flag[turn] equal to <code>false</code> while process 1 − <em>turn</em> waits with
+<em>flag[1 − turn]</em> equal to <code>true</code>, allowing process <em>turn</em> to enter the
+critical section. If only a single process i is trying to enter, then
+process 1 − i must reach the noncritical section with <em>flag[1 − i]</em>
+equal to true, allowing process i to reach the critical section.</p>
+</blockquote>
+<p>Dijkstra va plus loin pour un système permettant à un plus grand nombre de processus de <em>turn</em> :</p>
+<ul>
+<li>Avec un booléen <em>idle</em></li>
+<li>Et avec un <em>turn</em> integer que chaque processus peut mettre sur son index si <em>turn</em> indique un numéro de process qui n'est pas en section critique.</li>
+</ul>
+<p>L'OS <a href="https://en.wikipedia.org/wiki/THE_multiprogramming_system">THE operating system</a>, prévu pour le <a href="https://en.wikipedia.org/wiki/Electrologica_X8">Electrologica X8</a> voit donc l'introduction d'un paradigme de multiprogrammation :</p>
+<ul>
+<li><em>Sémaphores</em></li>
+<li>1 CPU + 1 CPU dédié périphériques</li>
+<li>Un système par couches <em>Layer</em> où le Layer 0 assure l'ordonnancement des différents processus (scheduler).</li>
+</ul>
+<p>Important : ces considérations et algorithmes sont théoriques, et relativement simple à penser dans un système prédictible et linéaire.
+L'informatique contemporaine est à la fois bien plus complexe dans l'architecture hardware et système, mais aussi dotée de facilités de programmation.</p>
+<h1 id="linformatique-moderne">L'informatique moderne</h1>
+<h2 id="architecture-processeur">Architecture processeur</h2>
+<h3 id="cpu-multi-coeurs">CPU multi-coeurs</h3>
+<p>Depuis 2001 et l'IBM POWER4, les fabricants ont commencé à fabriquer des processeurs à plusieurs coeurs.
+Aujourd'hui, ce principe est si généralisé qu'on retrouve même des microcontrolleurs (type ESP32) disposant de plusieurs coeurs.
+Mais à l'époque, c'est nouveau, et cette nouveauté apparaît avec un certain nombre de challenges de programmation &amp; construction :</p>
+<ul>
+<li>Le partage de cache</li>
+<li>La gestion des interruptions</li>
+<li>La nécessaire adaptation des OS pour prendre en charge ces multi coeurs</li>
+<li>La réécriture des logiciels qui pourraient en tirer partie</li>
+</ul>
+<h3 id="hardware-thread">Hardware thread</h3>
+<p>Une confusion courante concerne le terme même de <em>thread</em>. On distingue :</p>
+<ul>
+<li><em>thread materiel</em> (hardware thread)</li>
+<li><em>thread système</em> (system thread, ou software thread)</li>
+</ul>
+<p>Et plein d'autres.
+Le hardware thread est relatif aux architectures processeur.</p>
+<p><img src="file:///c:\Users\johan\Documents\GitHub\gtech3_multithreading\assets\intel_list.png" alt="intel_list" title="Liste processeurs"></p>
+<p>Il s'agit d'un contexte d'exécution physique au sein d'un coeur de processeur.
+Il permet l'exécution concurrente de plusieurs flux d'instructions.
+Sans rentrer dans le détail, il s'agit d'un mécanisme propre à chaque processeur (les threads hardware d'AMD sont différents de ceux d'Intel etc). Le point commun entre eux, c'est qu'ils apparaissent au système comme des coeurs à part entière. L'OS peut bien sûr aller chercher les informations de combien de coeurs physiques et combien de hardware thread.
+Si les mécanismes des hardware threads diffèrent selon les constructeurs, ils offrent l'avantage de pouvoir optimiser l'utilisation des coeurs en permettant une plus grande rentabilité de chaque coeur (en limitant les moments où le coeur est inoccupé).</p>
+<p>Ce que tout ça signifie, c'est que dans un système de multithreading de performance pure (par exemple un système où chaque thread exécute des instructions en permanence), il n'y a aucun intérêt à créer plus de threads logiciels que le nombre de threads matériels disponibles.</p>
+<p>Exemple connu :</p>
+<ul>
+<li>La commande <code>make</code> (compilation makefile Linux) dispose de l'option <code>j</code> : <code>make -j8</code>. Elle permet de paralléliser la compilation des différents objets avant la phase de linkage final du compileur. Dans ce contexte, inutile de préciser un nombre de threads supérieur au nombre de threads matériels disponibles.</li>
+</ul>
+<h4 id="du-côté-os">Du côté OS</h4>
+<p>Chaque système d'exploitation dispose d'un ordonnanceur (<em>scheduler</em>) qui gère le temps d'exécution accordé à chaque processus. Le <em>Moniteur de ressources</em> de Windows permet d'observer la charge de calcul de chaque thread matériel, le nombre de threads de chaque processus, et le nombre de threads matériels utilisés pour exécuter ces threads logiciels.</p>
+<p>Le Scheduler dispose d'une certain nombre d'informations pour chaque processus et chaque thread, notamment des polices de priorité, qui lui permettent d'évaluer quand lui donner du temps de calcul physique.</p>
+<p>Windows, MacOS et les grandes distributions Linux ne sont PAS des systèmes temps-réel : d'où la nécessité de ce scheduler.
+En effet, sur un microcontrolleur avec FreeRTOS, on peut prédire de manière sûre (en informatique) l'ordre d'exécution des tâches (threads), et avoir la certitude qu'elles seront exécutées dans un certain ordre.
+Dans un système <em>general purpose</em> comme les ordinateurs modernes, le système est prévu pour gérer un grand nombre de tâches simultanées :</p>
+<ul>
+<li>Entrées sorties périphériques</li>
+<li>Réseau &amp; communication</li>
+<li>Un jeu vidéo</li>
+<li>Le gourmand navigateur internet</li>
+<li>Discord</li>
+<li>etc etc</li>
+</ul>
+<p>Chacune de ces applications correspond à un certain nombre de threads logiciels. Le <em>scheduler</em> va affecter du temps de calcul à chaque thread en fonction de sa priorité, de ses droits, et des processeurs (thread matériel) disponibles.
+Il serait long de décrire dans le détail comment fonctionnent précisément ces ordonnanceurs, mais il est important de comprendre que même dans un contexte de programmation multithreading : on ne dispose jamais pleinement d'un coeur CPU ni même d'un thread matériel.</p>
+<h2 id="quelques-concepts-clés">Quelques concepts clés</h2>
+<ul>
+<li><em>Concurrence vs Parallélisme</em>
+<ul>
+<li>La concurrence concerne le partage d'un temps de calcul <strong>séquentiel</strong> entre plusieurs tâches, moyennent un système d'interruption. Le concept de programmation le plus souvent utilisé pour la concurrence est la <strong>coroutine</strong>. On trouve aussi des systèmes concurrents avec les <strong>light threads</strong> utilisés par certains langages interprétés (Python, Ruby etc) en raison de la <em>Global Interpreter Lock</em> (un verrou qui assure la sécurité des threads en s'assurant qu'ils ne s'exécutent jamais en parallèle, permettant une sécurité mémoire notamment). On retrouve un fonctionnement similaire en JS et Dart avec les fonctionnalités <em>async</em> et <em>await</em>.</li>
+<li>Le parallélisme consiste à séparer des tâches sur différentes unités de calcul (threads) afin de permettre une exécution de plusieurs tâches <strong>en même temps</strong>. C'est du <strong>multithreading</strong>. Le thread logiciel est un concept à la définition assez largement partagée : tâche à laquelle le scheduler de l'OS va donner du temps de calcul sur un thread hardware qui est disponible. Par défaut, les threads partagent la mémoire. Certaines VM/compileurs implémentent des isolats ou <em>Isolates</em> qui sont de véritables threads parallèles mais qui ne partagent aucune mémoire, et peuvent communiquer entre-eux par messages (un message est une transmission de donnée qui implique une copie). C'est le cas de la VM d'Erlang ou du compileur Dart.</li>
+</ul>
+</li>
+<li><em>Preemptive vs non-preemptive</em> threading / scheduling :
+<ul>
+<li>Préemptive : l'ordonnancement préemptif signifie que le scheduler peut interrompre des tâches à tout moment pour en exécuter d'autres. C'est de cette manière que le scheduler système va pouvoir allouer du temps de calcul supplémentaire aux threads qui ont une haute priorité.</li>
+<li>Non-préemptif : c'est la tâche elle-même qui va <em>yield</em> (passer la main) le scheduleur pour permettre l'exécution d'une autre tâche. C'est le principe de fonctionnement classique des coroutines.</li>
+</ul>
+</li>
+</ul>
+<p><img src="file:///c:\Users\johan\Documents\GitHub\gtech3_multithreading\assets\concurrency_vs_parallelism.png" alt="concurrency_parallelism"></p>
+
+            
+            
+        </body>
+        </html>
