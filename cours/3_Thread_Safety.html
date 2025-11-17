@@ -147,7 +147,7 @@ Ces mécanismes diffèrent de ceux étudiés par Dijkstra, bien qu'on utilise en
 <ul>
 <li>Opérations atomiques
 <ul>
-<li>Pour WIN32, les Interlocked correspondent à ces opérations</li>
+<li>Pour WIN32, les Interlocked correspondent à ces opérations (sinon std::atomic)</li>
 </ul>
 </li>
 <li>Mutex (mutual exclusive)
@@ -161,12 +161,13 @@ Ces mécanismes diffèrent de ceux étudiés par Dijkstra, bien qu'on utilise en
 <ul>
 <li>Implémentation WIN32 : Similaire au Mutex, mais uniquement au sein d'un processus</li>
 <li>Très rapide et sûr</li>
-<li>Basé sur un spinlock</li>
+<li>Basé sur un spinlock &amp; un sémaphore</li>
 </ul>
 </li>
 <li>Spinlock
 <ul>
 <li>Basé sur des opérations atomiques,  les thread qui tenteent d'acquérir le verrou en attente lorsque ce dernier est déjà occupé vont faire des spins, c'est-à-dire des tentatives successives jusqu'à ce qu'il soit déverouillé</li>
+<li>Très rapide, car busy waiting</li>
 <li>Ces spins coûtent des cycles CPU</li>
 </ul>
 </li>
@@ -174,6 +175,7 @@ Ces mécanismes diffèrent de ceux étudiés par Dijkstra, bien qu'on utilise en
 <ul>
 <li>Un mécanisme permettant de faire dormir un thread lorsque le verrou n'est pas disponible, et de le réveiller lorsqu'il est à nouveau déverouillé (économisant ainsi des cycles CPU)</li>
 <li>Problème : le temps de réveil est un relativement long (on parle de quelques microsecondes)</li>
+<li>économique en CPU : lazy waiting</li>
 </ul>
 </li>
 <li>Semaphore
@@ -183,12 +185,105 @@ Ces mécanismes diffèrent de ceux étudiés par Dijkstra, bien qu'on utilise en
 <li>Lorsque la variable est 0, aucun thread ne peut accéder au signal</li>
 </ul>
 </li>
+<li>SRWLock (slim reader writer)
+<ul>
+<li>Un verrou qui a deux modes :
+<ul>
+<li>Accorde la lecture à plusieurs threads en même temps</li>
+<li>Accorde l'écriture à un seul thread</li>
+</ul>
+</li>
+<li>Il s'agit d'un verrou léger : rapide, faible empreinte mémoire</li>
+<li>A chaque tentative de verrouillage, le thread spécifie s'il tente de verrouiller en exclusif ou en partagé</li>
+</ul>
+</li>
 </ul>
 <p><a href="https://learn.microsoft.com/fr-fr/windows/win32/sync/critical-section-objects">Les objets de sécurité mémoire WIN32</a></p>
+<h2 id="threading-lock-free">Threading <em>lock-free</em></h2>
 <p>Les verrous ont une propriété qui peut-être ambigue : ils sont dits <em>lock-free</em> lorsqu'ils garantissent qu'au moins un thread peut progresser.
 Il ne sont pas <em>lock-free</em> si aucune garantie n'existe à ce sujet. Par exemple, si un thread qui possède un verrou est suspendu, il empêche l'exécution de tous les threads qui tenteront d'accéder à ce verrou. Situation de blocage.
 Le <em>lock-free</em> n'a donc rien a voir avec la notion de verrou (du <em>spinlock</em> par exemple).</p>
 <h2 id="les-deadlocks">Les deadlocks</h2>
+<p>Le <em>deadlock</em> (interblocage) est une situation problématique déjà étudiée par Dijkstra et Dekker dans leurs études préliminaires des verrous.
+IL s'agit d'une situation d'attente circulaire dans laquelle au moins deux threads vont s'attendre indéfiniement.</p>
+<p>Thread A détient Data 1. <br>
+Thread B détient Data 2. <br>
+Thread A a besoin de Data 2 pour libérer 1<br>
+Thread B a besoin de Data 1 pour libérer 2.</p>
+<p>Les deux threads vont donc attendre indéfiniement que l'autre thread libère sa ressource, ce qu'il ne fera jamais.</p>
+<h2 id="critical-section">Critical Section</h2>
+<p>La section critique de la WIN API est un mélange de plusieurs concepts de synchronisation :</p>
+<ul>
+<li>Un spinlock</li>
+<li>Un sémaphore</li>
+<li>Je suspecte qu'il y ait une condition variable aussi</li>
+</ul>
+<p>Il s'agit d'un objet très &quot;General Purpose&quot;, qui fonctionnera de manière optimisée dans la plupart des cas.</p>
+<p>Dans la programmation multithreading, on a (TRES) souvent recours à une SafeQueue.  En effet, elle répond à au moins deux besoins fondamentaux :</p>
+<ul>
+<li>Une liste de tâches lourdes à exécuter en FIFO. Chaque Thread va aller piocher une nouvelle tâche à exécuter lorsqu'il a fini la précédente. Et, potentiellement, un autre thread va la remplir en même temps.</li>
+<li>La communication entre Threads : Chaque thread est associé à une queue d'objets de types &quot;Messages&quot;. De cette manière, un autre thread peut accéder à cette queue et lui adresser une nouvelle tâche à exécuter, un comportement à adopter ou autre.</li>
+</ul>
+<pre><code class="language-cpp">  <span class="hljs-comment">// On lui passe un pointeur vers la section critique (objet global, partagé par les threads)</span>
+  <span class="hljs-function">VOID <span class="hljs-title">InitializeCriticalSection</span><span class="hljs-params">(LPCRITICAL_SECTION lpCriticalSection)</span></span>; 
+
+  <span class="hljs-comment">// Alternativement, on peut y adjoindre un Spin (avant d&#x27;entrer en phase Wait)</span>
+  <span class="hljs-function">BOOL <span class="hljs-title">InitializeCriticalSectionAndSpinCount</span><span class="hljs-params">(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount)</span></span>;
+
+  <span class="hljs-comment">// Si on utilise l&#x27;initialisation classique, on peut toujours appeler </span>
+  <span class="hljs-function">DWORD <span class="hljs-title">SetCriticalSectionSpinCount</span><span class="hljs-params">(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount)</span></span>;
+
+  <span class="hljs-comment">// On entre dans la section critique, sinon le thread spin &amp; entre en attente (si elle est verouillée).</span>
+  <span class="hljs-comment">// Cette fonction peut lever des exceptions : EXCEPTION_POSSIBLE_DEADLOCK, STATUS_POSSIBLE_DEADLOCK. </span>
+  <span class="hljs-function">VOID <span class="hljs-title">EnterCriticalSection</span><span class="hljs-params">(LPCRITICAL_SECTION lpCriticalSection)</span></span>;
+
+  <span class="hljs-comment">// Alternativement, si on veut juste essayer d&#x27;entrer </span>
+  <span class="hljs-comment">// Renvoie si on a pu acquérir le verrou </span>
+  <span class="hljs-function">BOOL <span class="hljs-title">TryEnterCriticalSection</span><span class="hljs-params">(LPCRITICAL_SECTION lpCriticalSection)</span></span>; 
+
+  <span class="hljs-comment">// On oublie évidemment pas </span>
+  <span class="hljs-function">VOID <span class="hljs-title">LeaveCriticalSection</span><span class="hljs-params">(LPCRITICAL_SECTION lpCriticalSection)</span></span>;
+
+  <span class="hljs-comment">// On oublie pas non plus </span>
+  <span class="hljs-function">VOID <span class="hljs-title">DeleteCriticalSection</span><span class="hljs-params">(LPCRITICAL_SECTION lpCriticalSection)</span></span>;
+</code></pre>
+<h2 id="exercice--création-dune-safequeue">Exercice : création d'une SafeQueue</h2>
+<p>Consignes :</p>
+<ul>
+<li>Utiliser CriticalSection pour la synchronisation</li>
+<li>Tenter d'utiliser cette queue avec au moins 2 threads clients (pop) et deux threads serveurs (push) en même temps, sans aucun Sleep.</li>
+<li>La Queue doit être une classe (template) : de taille statique pour commencer (spécifiée en template en plus du type)</li>
+</ul>
+<h2 id="les-condition-variables---events">Les condition variables  &amp; Events</h2>
+<p>Les condition variables sont également des outils essentiels dans la gestion de la synchronisation multithreading, puisqu'elle permet simplement de mettre des threads en attente (Sleep, ne consomme plus de CPU) puis de les réveiller lorsque la condition variable est signalée. Ce n'est pas à proprement parler un outil de sécurité mémoire, mais cela permet d'économiser beaucoup de cycles CPU (0 polling).
+On les utilise associées à des locks (Critical Section ou SRWLock).</p>
+<p><a href="https://learn.microsoft.com/en-us/windows/win32/sync/condition-variables">Conditions Variables</a></p>
+<pre><code class="language-cpp"><span class="hljs-function">BOOL <span class="hljs-title">SleepConditionVariableCS</span><span class="hljs-params">(
+  PCONDITION_VARIABLE ConditionVariable, 
+  PCRITICAL_SECTION CriticalSection, 
+  DWORD timeout
+)</span></span>;
+
+<span class="hljs-comment">/* Cette fonction précédente va : 
+  - Release la condition variable 
+  - Dormir jusqu&#x27;à ce que l&#x27;une des fonctions suivantes soit appelée, ou que le timeout soit dépassé
+*/</span>
+
+<span class="hljs-function">VOID <span class="hljs-title">WakeAllConditionVariable</span><span class="hljs-params">(PCONDITION_VARIABLE ConditionVariable)</span></span>; <span class="hljs-comment">// Réveille tous les threads qui attendent la condition</span>
+<span class="hljs-function">VOID <span class="hljs-title">WakeConditionVariable</span><span class="hljs-params">(PCONDITION_VARIABLE ConditionVariable)</span></span>; <span class="hljs-comment">// Réveille 1 thread qui attend </span>
+</code></pre>
+<p>On peut accomplir des choses similaires avec les events :</p>
+<pre><code class="language-cpp"><span class="hljs-comment">// Un thread attend un événement </span>
+wait_res = <span class="hljs-built_in">WaitForSingleObject</span>(event_handle, INFINITE); 
+
+<span class="hljs-comment">// Jusqu&#x27;à ce qu&#x27;un autre thread appelle </span>
+<span class="hljs-built_in">SetEvent</span>(event_handle);
+<span class="hljs-comment">// L&#x27;event est alors &quot;true&quot; (signalé) jusqu&#x27;à ce qu&#x27;un thread appelle </span>
+<span class="hljs-built_in">ResetEvent</span>(event_handle); <span class="hljs-comment">// Uniquement si l&#x27;argument ManualReset est True quand l&#x27;event a été créé</span>
+
+<span class="hljs-comment">// Si l&#x27;event n&#x27;est pas en ManualReset (donc reset automatique) : un seul thread est libéré lorsqu&#x27;on appelle SetEvent</span>
+
+</code></pre>
 
             
             
