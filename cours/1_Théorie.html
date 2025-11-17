@@ -266,6 +266,19 @@ Il serait long de décrire dans le détail comment fonctionnent précisément ce
 </li>
 </ul>
 <p><img src="file:///c:\Users\johan\Documents\GitHub\gtech3_multithreading\assets\concurrency_vs_parallelism.png" alt="concurrency_parallelism"></p>
+<h2 id="quand-utilise-t-on-des-threads-">Quand utilise-t-on des threads ?</h2>
+<p>Le multithreading peut être utilisé pour accroître la fluidité des opérations lourdes. Toutefois, il doit être pensé comme une architecture : un programme multithreading doit être conçu à partir de ce paradigme.</p>
+<p>Quelques situations parallélisable :</p>
+<ul>
+<li>Les fonctions bloquantes (audio temps-réel, traitement lourd comme traitement vidéo en temps-différé) lorsqu'on souhaite conserver en parallèle une interaction avec le programme (GUI, communication réseau ou autre)</li>
+<li>Le réseau (bloquant aussi) &gt; Serveurs par exemple</li>
+<li>Le traitement de grand nombres de données (par ex on doit appliquer un traitement similaire à une grande liste de vidéos) : on sérialise pour maximiser la performance en utilisant plus de threads matériels</li>
+</ul>
+<p>Dans le jeu vidéo :</p>
+<ul>
+<li>le multithreading peut-être utilisé pour séparer certaines boucles de jeu (physique, IA, audio, réseau etc)</li>
+<li>Pathfinding</li>
+</ul>
 
             
             

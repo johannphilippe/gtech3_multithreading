@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>La cr&eacute;ation de threads avec la WIN32 API</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="la-création-de-threads-avec-la-win32-api">La création de threads avec la WIN32 API</h1>
+<h2 id="créer-un-thread">Créer un thread</h2>
+<p>La fonction pour créer un thread est la suivante :</p>
+<pre><code class="language-cpp"><span class="hljs-function">HANDLE <span class="hljs-title">CreateThread</span><span class="hljs-params">(
+    LPSECURITY_ATTRIBUTES lpThreadAttributes, <span class="hljs-comment">// Ou NULL</span>
+    SIZE_T dwStackSize, <span class="hljs-comment">// Ou 0 pour la stack size par défaut (1Mb)</span>
+    LP_THREAD_START_ROUTINE lpStartAddress, <span class="hljs-comment">// Point d&#x27;entrée du thread</span>
+    __drv_aliasesMem LPVOID lpParameter, <span class="hljs-comment">// paramètres à passer au point d&#x27;entrée du Thread </span>
+    DWORD dwCreationFlags, <span class="hljs-comment">// Permet de créer soit un thread qui s&#x27;exécute immédiatement, soit un thread suspendu et de spécifier des paramètres de stack </span>
+    LPDWORD lpThreadId, <span class="hljs-comment">// Ou NULL si on n&#x27;en a pas besoin </span>
+)</span></span>;
+</code></pre>
+<p>Le thread va ensuite s'exécuter de manière parallèle, autonome, jusqu'à ce qu'on appelle la fonction suivante :</p>
+<pre><code class="language-cpp">    <span class="hljs-built_in">WaitForSingleObject</span>(HANDLE, DWORD milliseconds_to_wait);
+    <span class="hljs-comment">// INFINITE can be used for wait time</span>
+</code></pre>
+<p>Cette dernière va bloquer le thread appelant (le principal dans l'exemple suivant) jusqu'à ce que le thread attendu termine son exécution.</p>
+<p>Remarque :</p>
+<ul>
+<li>Le nombre maximum de threads dans un programme est corrélé au paramètre <code>dwStackSize</code></li>
+</ul>
+<pre><code class="language-cpp">    <span class="hljs-function">BOOL <span class="hljs-title">GetExitCodeThread</span><span class="hljs-params">(
+    HANDLE  hThread, <span class="hljs-comment">// Note handle de thread </span>
+    LPDWORD lpExitCode <span class="hljs-comment">// Un pointeur vers la valeur de retour du thread</span>
+    )</span></span>;
+</code></pre>
+<h3 id="exemple-">Exemple :</h3>
+<pre><code class="language-cpp"><span class="hljs-function">DWORD WINAPI <span class="hljs-title">ThreadRoutine</span><span class="hljs-params">(LPVOID params)</span>
+</span>{
+    LPDWORD array = (LPDWORD)params;
+
+    <span class="hljs-comment">// On peut récupérer le HANDLE du thread avec la fonction suivante : </span>
+    HANDLE this_thread = <span class="hljs-built_in">GetCurrentThread</span>(); 
+
+    <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>) {
+        <span class="hljs-comment">// Do something with data</span>
+
+        <span class="hljs-keyword">if</span>(anything_wrong) 
+            <span class="hljs-built_in">ExitThread</span>(SOME_ERROR_CODE);
+
+        <span class="hljs-keyword">if</span>(nothing_to_do)
+            <span class="hljs-built_in">Sleep</span>(<span class="hljs-number">10</span>); <span class="hljs-comment">// Milliseconds, pour éviter le polling permanent</span>
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}
+
+<span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> 
+</span>{
+    DWORD thread_id; 
+
+    <span class="hljs-comment">// Dummy memory allocation </span>
+    LPVOID params = <span class="hljs-built_in">HeapAlloc</span>(<span class="hljs-built_in">GetProcessHeap</span>(), HEAP_ZERO_MEMORY, <span class="hljs-built_in">sizeof</span>(DWORD) * <span class="hljs-number">100</span>);
+
+    <span class="hljs-comment">// On créé le thread</span>
+    HANDLE thread = <span class="hljs-built_in">CreateThread</span>(
+        <span class="hljs-literal">NULL</span>, <span class="hljs-comment">// Security attributes </span>
+        <span class="hljs-number">0</span>, <span class="hljs-comment">// Stack size </span>
+        ThreadRoutine, 
+        params, 
+        <span class="hljs-number">0</span>, <span class="hljs-comment">// Le thread démarre immédiatement </span>
+        &amp;thread_id
+    );
+
+    <span class="hljs-comment">// On vérifie si le thread est bien créé </span>
+    <span class="hljs-keyword">if</span> (thread == <span class="hljs-literal">NULL</span>) {
+        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Failed to create thread, thread ID : %d&quot;</span>, thread_id);
+        <span class="hljs-built_in">ExitProcess</span>(<span class="hljs-number">3</span>);
+    }
+
+    <span class="hljs-comment">// Sans cet appel, on créé un problème : le thread principal (fonction main) arrive à la fin de son exécution avant que le thread créé n&#x27;ait terminé son exécution : le programme s&#x27;interrompt, sans qu&#x27;on ait pu valider si la tâche du thread s&#x27;est terminée </span>
+    DWORD wait_res = <span class="hljs-built_in">WaitForSingleObject</span>(thread, INFINITE); 
+    <span class="hljs-keyword">if</span>(wait_res != <span class="hljs-number">0</span>) {
+        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Thread returned with error : %d \n&quot;</span>, res);
+    }
+
+    <span class="hljs-comment">// Supprimer l&#x27;objet thread </span>
+    BOOL thread_destruction_res = <span class="hljs-built_in">CloseHandle</span>(thread); 
+    <span class="hljs-comment">// Penser aussi à supprimer la mémoire allouée &quot;params&quot; </span>
+
+    <span class="hljs-keyword">return</span> wait_res;
+}
+</code></pre>
+<h2 id="la-manipulation-des-threads-depuis-le-thread-parent">La manipulation des threads depuis le thread parent</h2>
+<p>On peut arrêter ou reprendre l'exécution d'un thread depuis un autre thread, grâce à son <code>HANDLE</code>.</p>
+<pre><code class="language-cpp">    <span class="hljs-comment">// Si la fonction renvoie -1, c&#x27;est un échec, sinon elle renvoie le nombre de suspensions précédentes </span>
+    <span class="hljs-function">DWORD <span class="hljs-title">SuspendThread</span><span class="hljs-params">(
+        HANNDLE thread
+    )</span></span>;
+
+    <span class="hljs-comment">// Utilisé lorsqu&#x27;un thread a été suspendu ou qu&#x27;il a été créé avec le flag de suspension </span>
+    <span class="hljs-comment">// Renvoie la même chose que SuspendThread</span>
+    <span class="hljs-function">DWORD <span class="hljs-title">ResumeThread</span><span class="hljs-params">(
+        HANDLE thread
+    )</span></span>;
+</code></pre>
+<h2 id="exercice-whack-a-thread">Exercice Whack a thread</h2>
+<p>On créé un programme qui fait apparaître des threads aléatoirement, et l'utilisateur doit utiliser une touche pour le &quot;tuer&quot;.</p>
+<ul>
+<li>Chaque thread apparaît pour une durée de vie de 0.5 à quelques secondes</li>
+<li>Une touche aléatoire sur laquelle il faut appuyer pour le faire disparaître (à chaque fois différente)</li>
+<li>Si l'utilisateur appuie dans le temps imparti, le thread est tué, et l'utilisateur gagne un point</li>
+<li>S'il ne parvient pas à temps, il perd un point</li>
+<li>Un réglage de difficulté pour faire apparaître des threads plus vite &amp; pour moins longtemps</li>
+</ul>
+<h2 id="le-thread-local-storage">Le Thread Local Storage</h2>
+<p>Le thread local storage est un outil permettant à chaque Thread de stocker une valeurs locales du thread. Chaque thread a son emplacement pour l'index renvoyé par TlsAlloc.</p>
+<p>Plusieurs patterns possibles pour gérer plusieurs objets dans la mémoire locale des threads :</p>
+<ul>
+<li>Plusieurs indexes de stockage (plusieurs TlsAlloc)</li>
+<li>La valeur stockée est un pointeur opaque vers un objet d'une structure de donnée complexe et composite</li>
+</ul>
+<pre><code class="language-cpp">    <span class="hljs-function">DWORD <span class="hljs-title">TlsAlloc</span><span class="hljs-params">()</span></span>; <span class="hljs-comment">// Renvoie un index TLS  </span>
+    <span class="hljs-function">BOOL <span class="hljs-title">TlsSetValue</span><span class="hljs-params">(DWORD dwTlsIndex, LPVOID lpTlsValue)</span></span>; <span class="hljs-comment">//True si réussi</span>
+    <span class="hljs-function">LPVOID <span class="hljs-title">TlsGetValue</span><span class="hljs-params">(DWORD dwTlsIndex)</span></span>; 
+    <span class="hljs-function">BOOL <span class="hljs-title">TlsFree</span><span class="hljs-params">(DWORD dwTlsIndex)</span></span>; <span class="hljs-comment">// True si réussi, sinon appeler GetLastError </span>
+</code></pre>
+<h2 id="la-priorité-des-threads">La priorité des Threads</h2>
+<p>On peut spécifier la priorité système d'un thread, et modifier la manière donc le scheduler du système va allouer du temps de calcul à ce thread.</p>
+<p><a href="https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadpriority">Thread Priority</a></p>
+<pre><code class="language-cpp">    <span class="hljs-comment">// Renvoie True si réussi</span>
+    <span class="hljs-function">BOOL <span class="hljs-title">SetThreadPriority</span><span class="hljs-params">(
+        HANDLE hThread,  <span class="hljs-comment">// le Handle du thread dont on change la priorité </span>
+        <span class="hljs-type">int</span> nPriority <span class="hljs-comment">// La valeur de priorité </span>
+    )</span></span>;
+</code></pre>
+<p>Cette fonction entre en interaction serrée avec un autre attribut de priorité : la classe de priorité du processus lui-même.</p>
+<p><a href="https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass">Process Priority class</a></p>
+<pre><code class="language-cpp">    <span class="hljs-function">BOOL <span class="hljs-title">SetPriorityClass</span><span class="hljs-params">(
+        HANDLE hProcess, 
+        DWORD dwPriorityClass,  <span class="hljs-comment">// La priorité </span>
+    )</span></span>;
+
+</code></pre>
+<h3 id="remarque">Remarque</h3>
+<p>On s'intéresse rarement à la priorité des processus &amp; des threads.
+Ces notions correspondent à des programmes soumis à des contraintes très spécifiques, dont le jeu vidéo peut faire partie. Les logiciels audio temps-réel font appel à la priorité de processus REALTIME, et la priorité de thread TIME_CRITICAL.
+Mais dans des cas plus triviaux, il n'est pas nécessaire de s'intéresser à cette question (par défaut, les threads sont prévus par le système pour s'exécuter aussi vite que possible, de manière fluide et en symbiose avec les autres threads).</p>
+
+            
+            
+        </body>
+        </html>

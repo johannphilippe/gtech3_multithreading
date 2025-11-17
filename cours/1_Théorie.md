@@ -128,3 +128,17 @@ Il serait long de décrire dans le détail comment fonctionnent précisément ce
   - Non-préemptif : c'est la tâche elle-même qui va *yield* (passer la main) le scheduleur pour permettre l'exécution d'une autre tâche. C'est le principe de fonctionnement classique des coroutines.
 
 ![concurrency_parallelism](../assets/concurrency_vs_parallelism.png)
+
+
+## Quand utilise-t-on des threads ? 
+
+Le multithreading peut être utilisé pour accroître la fluidité des opérations lourdes. Toutefois, il doit être pensé comme une architecture : un programme multithreading doit être conçu à partir de ce paradigme. 
+
+Quelques situations parallélisable : 
+- Les fonctions bloquantes (audio temps-réel, traitement lourd comme traitement vidéo en temps-différé) lorsqu'on souhaite conserver en parallèle une interaction avec le programme (GUI, communication réseau ou autre)
+- Le réseau (bloquant aussi) > Serveurs par exemple 
+- Le traitement de grand nombres de données (par ex on doit appliquer un traitement similaire à une grande liste de vidéos) : on sérialise pour maximiser la performance en utilisant plus de threads matériels 
+
+Dans le jeu vidéo : 
+- le multithreading peut-être utilisé pour séparer certaines boucles de jeu (physique, IA, audio, réseau etc)
+- Pathfinding 

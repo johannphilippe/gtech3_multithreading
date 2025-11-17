@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Thread Safety</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="thread-safety">Thread Safety</h1>
+<p>Le problème principal du multithreading est la gestion de la mémoire partagée.
+En effet, on souhaite éviter des data racen (la corruption mémoire), qui peut se produire lorsqu'un thread écrit sur une zone mémoire lue par un autre thread simultanément (segmentation fault, ou corruption).</p>
+<p>Comme nous l'avons vu dans la partie théorique, il existe plusieurs mécanismes permettant de sécuriser l'accès à des ressources partagées.
+Ces mécanismes diffèrent de ceux étudiés par Dijkstra, bien qu'on utilise encore la Sémaphore.</p>
+<p>Liste des verrous connus :</p>
+<ul>
+<li>Opérations atomiques
+<ul>
+<li>Pour WIN32, les Interlocked correspondent à ces opérations</li>
+</ul>
+</li>
+<li>Mutex (mutual exclusive)
+<ul>
+<li>Algorithme de Dekker</li>
+<li>Algorithme de Peterson</li>
+<li>Implémentation WIN32 fonction aussi entre processus</li>
+</ul>
+</li>
+<li>Critical Section
+<ul>
+<li>Implémentation WIN32 : Similaire au Mutex, mais uniquement au sein d'un processus</li>
+<li>Très rapide et sûr</li>
+<li>Basé sur un spinlock</li>
+</ul>
+</li>
+<li>Spinlock
+<ul>
+<li>Basé sur des opérations atomiques,  les thread qui tenteent d'acquérir le verrou en attente lorsque ce dernier est déjà occupé vont faire des spins, c'est-à-dire des tentatives successives jusqu'à ce qu'il soit déverouillé</li>
+<li>Ces spins coûtent des cycles CPU</li>
+</ul>
+</li>
+<li>Condition Variable
+<ul>
+<li>Un mécanisme permettant de faire dormir un thread lorsque le verrou n'est pas disponible, et de le réveiller lorsqu'il est à nouveau déverouillé (économisant ainsi des cycles CPU)</li>
+<li>Problème : le temps de réveil est un relativement long (on parle de quelques microsecondes)</li>
+</ul>
+</li>
+<li>Semaphore
+<ul>
+<li>La sémaphore est une variable qui autorise plusieurs threads à accéder à un signal</li>
+<li>A chaque fois qu'un thread entre dans la section critique, la variable est décrémentée, lorsqu'il en sort elle est incrémentée</li>
+<li>Lorsque la variable est 0, aucun thread ne peut accéder au signal</li>
+</ul>
+</li>
+</ul>
+<p><a href="https://learn.microsoft.com/fr-fr/windows/win32/sync/critical-section-objects">Les objets de sécurité mémoire WIN32</a></p>
+<p>Les verrous ont une propriété qui peut-être ambigue : ils sont dits <em>lock-free</em> lorsqu'ils garantissent qu'au moins un thread peut progresser.
+Il ne sont pas <em>lock-free</em> si aucune garantie n'existe à ce sujet. Par exemple, si un thread qui possède un verrou est suspendu, il empêche l'exécution de tous les threads qui tenteront d'accéder à ce verrou. Situation de blocage.
+Le <em>lock-free</em> n'a donc rien a voir avec la notion de verrou (du <em>spinlock</em> par exemple).</p>
+<h2 id="les-deadlocks">Les deadlocks</h2>
+
+            
+            
+        </body>
+        </html>
