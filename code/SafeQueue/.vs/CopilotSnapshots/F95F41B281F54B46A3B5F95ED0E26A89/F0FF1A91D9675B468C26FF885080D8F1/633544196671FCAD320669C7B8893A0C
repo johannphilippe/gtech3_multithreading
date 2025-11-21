@@ -1,0 +1,154 @@
+﻿#pragma once
+
+#include<Windows.h>
+#include<cstdio>
+#include<processthreadsapi.h>
+
+template<typename T>
+class SpinQueue {
+public:
+	SpinQueue(size_t size)
+		: _size(0)
+		, _capacity(size)
+		, _data(NULL)
+		, _lock(0)
+		, _resizing(0)
+		, _first_out_index(0)
+	{
+		_data = (T*) HeapAlloc(GetProcessHeap(), 
+			HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, 
+			sizeof(T) * _capacity);
+		if (_data == NULL) {
+			printf("HeapAlloc failed in SafeQueue \n");
+		}
+	}
+
+	~SpinQueue() {
+		HeapFree(GetProcessHeap(), 0, _data);
+	}
+
+	bool push(const T& item, DWORD timeout_ms = 20) {
+		if (_size >= _capacity) {
+			if (!_realloc(_capacity * 2)) {
+				return false;
+			}
+		}
+		if (!_wait_lock(timeout_ms, &_lock)) {
+			return false;
+		}
+
+		size_t write_index = (_first_out_index + _size) % _capacity;
+		_data[write_index] = item;
+		_size++;
+		_unlock(&_lock);
+		return true;
+	}
+
+	bool pop(T& item, DWORD timeout_ms = 20) {
+		if (!_wait_lock(timeout_ms, &_lock)) {
+			return false;
+		}
+		if (_size <= 0) {
+			_unlock(&_lock);
+			return false;
+		}
+
+		item = _data[_first_out_index];
+		_size--, _first_out_index++;
+
+		if(_first_out_index >= _capacity){
+			_first_out_index = 0;
+		}
+
+		_unlock(&_lock);
+		return true;
+	}
+
+private:
+
+	bool _realloc(size_t s) {
+		if (!_wait_lock(20, &_resizing)) {
+			return false;
+		}
+
+		T* new_mem = (T*) HeapAlloc(GetProcessHeap(),
+			HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS,
+			sizeof(T) * s);
+		
+			if (new_mem == NULL) {
+			InterlockedExchange64(&_resizing, 0);
+			return false;
+		}
+
+		if (!_wait_lock(20, &_lock)) {
+			HeapFree(GetProcessHeap(), 0 , new_mem );
+			InterlockedExchange64(&_resizing, 0);
+			return false;
+		}
+		size_t copy_size = (_size < s) ? _size : s;
+		if(_first_out_index + copy_size <= _capacity){
+			CopyMemory(new_mem, _data + _first_out_index, sizeof(T) * copy_size);
+		}
+		else {
+			size_t first_part_size = _capacity - _first_out_index;
+			CopyMemory(new_mem, _data + _first_out_index, sizeof(T) * first_part_size);
+			CopyMemory(new_mem + first_part_size, _data, sizeof(T) * (copy_size - first_part_size));
+		}
+		_first_out_index = 0;
+
+		T* tmp = _data;
+		_data = new_mem;
+		_capacity = s;
+		_unlock(&_lock);
+		BOOL free_res = HeapFree(GetProcessHeap(), 0, tmp);
+		if (free_res == FALSE) {
+			printf("HeapFree failed in SafeQueue _realloc\n");
+		}
+		_unlock(&_resizing);
+		return true;
+	}
+
+	bool _try_lock(LONG64* lock) {
+		LONG64 prev = InterlockedCompareExchange64(lock, 1, 0);
+		return prev == 0;
+	}
+
+	bool _wait_lock(DWORD timeout_ms, LONG64* lock) {
+		DWORD start_time = GetTickCount64();
+		size_t spins = 0;
+		while (true) {
+			if (_try_lock(lock)) { return true; }
+
+			if (GetTickCount64() - start_time > timeout_ms) {
+				return false;
+			}
+
+			if (spins < 8) {
+				YieldProcessor();
+			}
+			else if (spins < 16) {
+				SwitchToThread();
+			}
+			else if (spins < 32) {
+				Sleep(0);
+			}
+			else {
+				Sleep(1);
+			}
+			spins++;
+		}
+		return true;
+	}
+
+	void _unlock(LONG64 *_lock) {
+		InterlockedExchange64(_lock, 0);
+	}
+
+	size_t _size;
+	size_t _capacity;
+
+	T* _data;
+	LONG64 _lock, _resizing;
+
+	size_t _first_out_index; 
+};

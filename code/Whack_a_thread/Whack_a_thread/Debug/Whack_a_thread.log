@@ -1,0 +1,7 @@
+﻿  Whack_a_thread.cpp
+C:\Users\johan\Documents\GitHub\gtech3_multithreading\code\Whack_a_thread\Whack_a_thread\Whack_a_thread.cpp(22,12): warning C4244: 'argument' : conversion de 'time_t' en 'unsigned int', perte possible de données
+C:\Users\johan\Documents\GitHub\gtech3_multithreading\code\Whack_a_thread\Whack_a_thread\Whack_a_thread.cpp(72,12): warning C4244: 'argument' : conversion de 'time_t' en 'unsigned int', perte possible de données
+C:\Users\johan\Documents\GitHub\gtech3_multithreading\code\Whack_a_thread\Whack_a_thread\Whack_a_thread.cpp(120,10): warning C4477: 'printf' : la chaîne de format '%li' nécessite un argument de type 'long', mais l'argument variadique 1 est de type 'LONG64'
+C:\Users\johan\Documents\GitHub\gtech3_multithreading\code\Whack_a_thread\Whack_a_thread\Whack_a_thread.cpp(120,10): message : utilisez '%lli' dans la chaîne de format
+C:\Users\johan\Documents\GitHub\gtech3_multithreading\code\Whack_a_thread\Whack_a_thread\Whack_a_thread.cpp(120,10): message : utilisez '%I64i' dans la chaîne de format
+  Whack_a_thread.vcxproj -> C:\Users\johan\Documents\GitHub\gtech3_multithreading\code\Whack_a_thread\Debug\Whack_a_thread.exe

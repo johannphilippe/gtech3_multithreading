@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\johan\\Documents\\GitHub\\gtech3_multithreading\\code\\Thread_isolated_task\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{512533FD-A80E-4F04-8EA1-C7015E7195DC}|Thread_isolated_task\\Thread_isolated_task.vcxproj|C:\\Users\\johan\\Documents\\GitHub\\gtech3_multithreading\\code\\Thread_isolated_task\\Thread_isolated_task\\Thread_isolated_task.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{512533FD-A80E-4F04-8EA1-C7015E7195DC}|Thread_isolated_task\\Thread_isolated_task.vcxproj|solutionrelative:Thread_isolated_task\\Thread_isolated_task.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Thread_isolated_task.cpp",
+              "DocumentMoniker": "C:\\Users\\johan\\Documents\\GitHub\\gtech3_multithreading\\code\\Thread_isolated_task\\Thread_isolated_task\\Thread_isolated_task.cpp",
+              "RelativeDocumentMoniker": "Thread_isolated_task\\Thread_isolated_task.cpp",
+              "ToolTip": "C:\\Users\\johan\\Documents\\GitHub\\gtech3_multithreading\\code\\Thread_isolated_task\\Thread_isolated_task\\Thread_isolated_task.cpp",
+              "RelativeToolTip": "Thread_isolated_task\\Thread_isolated_task.cpp",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAowDcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-10-19T13:37:13.261Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

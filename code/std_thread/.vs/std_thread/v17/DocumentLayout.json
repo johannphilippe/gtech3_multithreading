@@ -1,0 +1,41 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\johan\\Documents\\GitHub\\gtech3_multithreading\\code\\std_thread\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C6B72F98-1D34-4BB9-B068-55627958A700}|std_thread\\std_thread.vcxproj|C:\\Users\\johan\\Documents\\GitHub\\gtech3_multithreading\\code\\std_thread\\std_thread\\std_thread.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{C6B72F98-1D34-4BB9-B068-55627958A700}|std_thread\\std_thread.vcxproj|solutionrelative:std_thread\\std_thread.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:2:0:{b9f91511-5ca5-40ec-9726-f3e3a7e534e2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "std_thread.cpp",
+              "DocumentMoniker": "C:\\Users\\johan\\Documents\\GitHub\\gtech3_multithreading\\code\\std_thread\\std_thread\\std_thread.cpp",
+              "RelativeDocumentMoniker": "std_thread\\std_thread.cpp",
+              "ToolTip": "C:\\Users\\johan\\Documents\\GitHub\\gtech3_multithreading\\code\\std_thread\\std_thread\\std_thread.cpp",
+              "RelativeToolTip": "std_thread\\std_thread.cpp",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABAAAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-21T15:30:21.09Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
