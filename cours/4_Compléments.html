@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Quelques g&eacute;n&eacute;ralit&eacute;s sur le multithreading hors API Windows</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="quelques-généralités-sur-le-multithreading-hors-api-windows">Quelques généralités sur le multithreading hors API Windows</h1>
+<p>Il s'agit là d'éléments de culture générale.</p>
+<h2 id="système-temps-réel">Système temps-réel</h2>
+<p>Dans un système d'exploitation temps-réel, il est possible de programmer en étant sûr de l'exécution  de ses différents threads &amp; tâches, car absence de scheduler système (ou minimal) : le programmeur est le scheduler.</p>
+<h3 id="exemple-de-freertos">Exemple de FreeRTOS</h3>
+<p><a href="https://fr.wikipedia.org/wiki/FreeRTOS">FreeRTOS</a></p>
+<p>Dans FreeRTOS</p>
+<pre><code class="language-cpp">  <span class="hljs-built_in">xCreateTaskPinnedToCore</span>(
+    TaskFunction_t pxTaskCode, 
+    <span class="hljs-type">const</span> <span class="hljs-type">char</span> * name,
+    <span class="hljs-type">const</span> <span class="hljs-type">uint32_t</span> stack_size, 
+    <span class="hljs-type">void</span> * <span class="hljs-type">const</span> params, 
+    UBaseType_t priority, 
+    StackType_t * <span class="hljs-type">const</span> stack_buffer, 
+    StaticTask_t * <span class="hljs-type">const</span> task_buffer, 
+    <span class="hljs-type">const</span> BaseType_t code_id
+  );
+</code></pre>
+<p>Quand on créé une tâche, on lui assigne un coeur et une priorité. Lorsque plusieurs tâches s'exécutent sur un même coeur, et dans le cas où elles auraient besoin de temps de calcul en même temps, la priorité s'applique strictement (nécessaire en temps-réel). Aucune autre tâche que celles programmées ne s'exécutent (OS léger), on peut ainsi garantir l'exécution en temps-réel, et opérer des vraies programmes time critical.</p>
+<h2 id="le-threading--la-stl">Le threading &amp; la STL</h2>
+<p>Pour la culture générale, car std::thread n'est pas autorisé pour ce projet.</p>
+<p><a href="https://en.cppreference.com/w/cpp/atomic.html">Concurrence in STL</a>
+<a href="https://en.cppreference.com/w/cpp/experimental/parallelism.html">Extensions parallèles</a></p>
+<pre><code class="language-cpp"><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;thread&gt;</span></span>
+
+<span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">thread_task</span><span class="hljs-params">(<span class="hljs-type">int</span> arg_a, <span class="hljs-type">double</span> arg_2)</span>
+</span>{
+
+}
+
+<span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">thread_task2</span><span class="hljs-params">(Object &amp;o)</span>
+</span>{
+
+}
+
+<span class="hljs-comment">// la fonction, puis les arguments, passbyvalue</span>
+<span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(thread_task, <span class="hljs-number">12</span>, <span class="hljs-number">1.53</span>)</span></span>;
+<span class="hljs-comment">// Same, pass by ref </span>
+Object o;
+<span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(thread_task2, std::ref(o))</span></span>;
+
+
+<span class="hljs-comment">// On lui passe une lambda </span>
+<span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">([&amp;](){
+    <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>)
+    {
+        <span class="hljs-comment">// do something </span>
+    }
+})</span></span>;
+
+<span class="hljs-comment">// Avec une méthode</span>
+Object o;
+<span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(&amp;Object::thread_task, &amp;o)</span></span>;
+
+<span class="hljs-comment">//On pour ensuite joindre le thread (c&#x27;est comme WaitForSingleObject)</span>
+t.<span class="hljs-built_in">join</span>();
+
+<span class="hljs-comment">// Ou le détacher (on perd sa trace, il n&#x27;est plus lié à l&#x27;objet t)</span>
+t.<span class="hljs-built_in">detach</span>();
+</code></pre>
+<p>Il existe aussi depuis C++ 20 la classe <code>std::jthread</code>, qui propose une fonctionnalité de <code>request_stop</code> pour automatiquement rejoindre un thread et demander son arrêt <em>safe</em>.</p>
+<h3 id="les-verrous">Les verrous</h3>
+<pre><code class="language-cpp"><span class="hljs-comment">// Le mutex (différent du mutex windows)</span>
+std::mutex mtx; 
+mtx.<span class="hljs-built_in">lock</span>();
+mtx.<span class="hljs-built_in">try_lock</span>();
+mtx.<span class="hljs-built_in">unlock</span>(); 
+
+<span class="hljs-comment">// Les verrous uniques </span>
+<span class="hljs-function">std::unique_lock <span class="hljs-title">lock</span><span class="hljs-params">(mtx)</span></span>; <span class="hljs-comment">// prend possession du mutex, la relâche lorsque l&#x27;objet est détruit </span>
+
+<span class="hljs-comment">// Conditions variables </span>
+std::condition_variable cv; 
+cv.<span class="hljs-built_in">wait</span>(lock, []{<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;});
+
+<span class="hljs-comment">// Do something </span>
+
+lock.<span class="hljs-built_in">unlock</span>();
+cv.<span class="hljs-built_in">notify_one</span>(); <span class="hljs-comment">// Réveille une cv en attente</span>
+cv.<span class="hljs-built_in">notify_all</span>();
+</code></pre>
+<h4 id="les-atomiques">Les atomiques</h4>
+<pre><code class="language-cpp"><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;atomics&gt;</span></span>
+
+<span class="hljs-comment">// Atomic n&#x27;est pas lock free</span>
+std::atomic&lt;<span class="hljs-type">bool</span>&gt; keep_running = <span class="hljs-literal">true</span>; 
+
+<span class="hljs-comment">// Any thread can do </span>
+keep_running = <span class="hljs-literal">false</span>; 
+<span class="hljs-comment">// Ou </span>
+keep_running.<span class="hljs-built_in">store</span>(<span class="hljs-literal">false</span>); 
+
+<span class="hljs-comment">// Et on peu lire atomiquement : </span>
+<span class="hljs-type">bool</span> should_i_keep_running = keep_running.<span class="hljs-built_in">load</span>();
+
+<span class="hljs-comment">// Dispose aussi de fonctionnalités wait, notify_one, notify_all.</span>
+
+
+<span class="hljs-comment">// atomic_flag est lock_free</span>
+std::atomic_flag f{};
+<span class="hljs-comment">// Tente d&#x27;obtenir le verrou, renvoie la valeur précédente </span>
+<span class="hljs-type">bool</span> prev_val = f.<span class="hljs-built_in">test_and_set</span>(std::memory_order_acquire);
+<span class="hljs-type">bool</span> prev = f.<span class="hljs-built_in">test</span>();
+
+f.<span class="hljs-built_in">wait</span>();
+f.<span class="hljs-built_in">notify_one</span>();
+f.<span class="hljs-built_in">notify_all</span>();
+</code></pre>
+
+            
+            
+        </body>
+        </html>

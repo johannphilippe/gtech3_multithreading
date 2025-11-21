@@ -65,10 +65,6 @@ La section critique de la WIN API est un mélange de plusieurs concepts de synch
 
 Il s'agit d'un objet très "General Purpose", qui fonctionnera de manière optimisée dans la plupart des cas. 
 
-Dans la programmation multithreading, on a (TRES) souvent recours à une SafeQueue.  En effet, elle répond à au moins deux besoins fondamentaux : 
-- Une liste de tâches lourdes à exécuter en FIFO. Chaque Thread va aller piocher une nouvelle tâche à exécuter lorsqu'il a fini la précédente. Et, potentiellement, un autre thread va la remplir en même temps. 
-- La communication entre Threads : Chaque thread est associé à une queue d'objets de types "Messages". De cette manière, un autre thread peut accéder à cette queue et lui adresser une nouvelle tâche à exécuter, un comportement à adopter ou autre. 
-
 
 ``` cpp 
   // On lui passe un pointeur vers la section critique (objet global, partagé par les threads)
@@ -98,10 +94,14 @@ Dans la programmation multithreading, on a (TRES) souvent recours à une SafeQue
 
 ## Exercice : création d'une SafeQueue  
 
+Dans la programmation multithreading, on a (TRES) souvent recours à une SafeQueue.  En effet, elle répond à au moins deux besoins fondamentaux : 
+- Une liste de tâches lourdes à exécuter en FIFO. Chaque Thread va aller piocher une nouvelle tâche à exécuter lorsqu'il a fini la précédente. Et, potentiellement, un autre thread va la remplir en même temps. 
+- La communication entre Threads : Chaque thread est associé à une queue d'objets de types "Messages". De cette manière, un autre thread peut accéder à cette queue et lui adresser une nouvelle tâche à exécuter, un comportement à adopter ou autre. 
+
 Consignes : 
 - Utiliser CriticalSection pour la synchronisation 
-- Tenter d'utiliser cette queue avec au moins 2 threads clients (pop) et deux threads serveurs (push) en même temps, sans aucun Sleep. 
-- La Queue doit être une classe (template) : de taille statique pour commencer (spécifiée en template en plus du type)
+- La Queue doit être une classe (template) : de taille statique ou dynamique
+- Les appels à critical section se font dans la classe SafeQueue pour protéger les membres et données des appels concurrents.
 
 ## Les condition variables  & Events
 

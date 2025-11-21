@@ -142,3 +142,7 @@ Quelques situations parallélisable :
 Dans le jeu vidéo : 
 - le multithreading peut-être utilisé pour séparer certaines boucles de jeu (physique, IA, audio, réseau etc)
 - Pathfinding 
+
+# Loi d'Amdahl 
+
+[Loi d'Amdahl wikipedia](https://fr.wikipedia.org/wiki/Loi_d%27Amdahl)
