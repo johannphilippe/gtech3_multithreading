@@ -1,4 +1,5 @@
 notes.md
 projets_etudiants/
-**/x64/
+x64/
+Debug/
 *.exe
